@@ -15,3 +15,5 @@ function userRegistry($username, $password, $email){
 
     }
 }
+
+$method = $_SERVER["REQUEST_METHOD"];
