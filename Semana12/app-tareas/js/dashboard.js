@@ -1,35 +1,31 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    const API_URL = "backend/tasks.php";
     let isEditMode = false;
     let edittingId;
-    const tasks = [{
-        id: 1,
-        title: "Complete project report",
-        description: "Prepare and submit the project report",
-        dueDate: "2024-12-01",
-        comments: [{ id: 1, description: "There is too many tasks pending" }, { id: 2, description: "It needs to be a complete report" }]
-    },
-    {
-        id: 2,
-        title: "Team Meeting",
-        description: "Get ready for the season",
-        dueDate: "2024-12-01",
-    },
-    {
-        id: 3,
-        title: "Code Review",
-        description: "Check partners code",
-        dueDate: "2024-12-01",
+    let tasks = [];
 
-    },
-    {
-        id: 4,
-        title: "Deploy",
-        description: "Check deploy steps",
-        dueDate: "2024-12-01",
-    }];
+    async function loadTasks() {
+        //go to the backed to obtain the data
+        try {
+            const response = await fetch(API_URL, { method: 'GET', credentials: 'include' });
+            if (response.ok) {
+                tasks = await response.json();
+                renderTasks(tasks);
+            } else {
+                if (response.status == 401) {
+                    //estamos tratando de consutlar sin sesion
+                    window.location.href = "index.html";
+                }
+                console.error("Error al obtener tareas");
+            }
 
-    function loadTasks() {
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function renderTasks() {
         const taskList = document.getElementById('task-list');
         taskList.innerHTML = '';
         tasks.forEach(function (task) {
@@ -41,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     commentsList += `<li class="list-group-item">${comment.description} 
                     <button type="button" class="btn btn-sm btn-link remove-comment" data-visitid="${task.id}" data-commentid="${comment.id}">Remove</button>
                     </li>`;
-                }); 
+                });
                 commentsList += '</ul>';
             }
             const taskCard = document.createElement('div');
@@ -51,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="card-body">
                     <h5 class="card-title">${task.title}</h5>
                     <p class="card-text">${task.description}</p>
-                    <p class="card-text"><small class="text-muted">Due: ${task.dueDate}</small> </p>
+                    <p class="card-text"><small class="text-muted">Due: ${task.due_date}</small> </p>
                     ${commentsList}
                      <button type="button" class="btn btn-sm btn-link add-comment"  data-id="${task.id}">Add Comment</button>
 
@@ -78,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // alert(e.target.dataset.id);
                 document.getElementById("comment-task-id").value = e.target.dataset.id;
                 const modal = new bootstrap.Modal(document.getElementById("commentModal"));
-            modal.show()
+                modal.show()
 
             })
         });
@@ -88,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 let commentId = parseInt(e.target.dataset.commentid);
                 selectedTask = tasks.find(t => t.id === taskId);
                 commentIndex = selectedTask.comments.findIndex(c => c.id === commentId);
-                selectedTask.comments.splice(commentIndex,1);
+                selectedTask.comments.splice(commentIndex, 1);
                 loadTasks();
             })
         });
@@ -127,22 +123,22 @@ document.addEventListener('DOMContentLoaded', function () {
         loadTasks();
     }
 
-    document.getElementById('comment-form').addEventListener('submit', function (e){
+    document.getElementById('comment-form').addEventListener('submit', function (e) {
         e.preventDefault();
         const comment = document.getElementById('task-comment').value;
         const selectedTask = parseInt(document.getElementById('comment-task-id').value);
-        const task = tasks.find(t=> t.id === selectedTask);
+        const task = tasks.find(t => t.id === selectedTask);
 
 
         let nextCommentId = 1;
-         
-        if(task.comments){
+
+        if (task.comments) {
             nextCommentId = task.comments.length + 1;
-        }else{
+        } else {
             task.comments = [];
         }
-        
-        task.comments.push({id: nextCommentId, description: comment});
+
+        task.comments.push({ id: nextCommentId, description: comment });
         const modal = bootstrap.Modal.getInstance(document.getElementById('commentModal'));
         modal.hide();
         loadTasks();
@@ -176,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loadTasks();
     });
 
-    document.getElementById('commentModal').addEventListener('show.bs.modal', function(){
+    document.getElementById('commentModal').addEventListener('show.bs.modal', function () {
         document.getElementById('comment-form').reset();
     })
 
