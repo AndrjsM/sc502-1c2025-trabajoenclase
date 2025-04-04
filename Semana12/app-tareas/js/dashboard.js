@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             //cargar los datos en el formulario 
             document.getElementById('task-title').value = task.title;
             document.getElementById('task-desc').value = task.description;
-            document.getElementById('due-date').value = task.dueDate;
+            document.getElementById('due-date').value = task.due_date;
             //ponerlo en modo edicion
             isEditMode = true;
             edittingId = taskId;
@@ -117,15 +117,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function handleDeleteTask(event) {
         const id = parseInt(event.target.dataset.id);
-        try{
+        try {
             // API_URL + '?id=' + id; otra forma de concatenar en JS
-            const response = await fetch(`${API_URL}?id=${id}`,{credentials: 'include', method:'DELETE'});
-            if(response.ok){
+            const response = await fetch(`${API_URL}?id=${id}`, { credentials: 'include', method: 'DELETE' });
+            if (response.ok) {
                 loadTasks();
-            }else{
+            } else {
                 console.error("Problema al eliminar la tarea");
             }
-        }catch(err){
+        } catch (err) {
             console.error(err);
         }
     }
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     })
 
-    document.getElementById('task-form').addEventListener('submit', function (e) {
+    document.getElementById('task-form').addEventListener('submit', async function (e) {
         e.preventDefault();
 
         const title = document.getElementById("task-title").value;
@@ -160,11 +160,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const dueDate = document.getElementById("due-date").value;
 
         if (isEditMode) {
-            //todo editar
-            const task = tasks.find(t => t.id === edittingId);
-            task.title = title;
-            task.description = description;
-            task.dueDate = dueDate;
+            const response = await fetch(`${API_URL}?id=${edittingId}`,
+                {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title: title, description: description, due_date: dueDate })
+                });
+            if (!response.ok) {
+                console.error("no se pudo actualizar la tarea");
+            }
+
         } else {
             const newTask = {
                 id: tasks.length + 1,
